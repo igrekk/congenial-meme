@@ -138,3 +138,50 @@ body{background:light-dark(#eef1f6,#11141a);padding:28px 22px;color:light-dark(#
 @media(max-width:760px){body{padding:14px 10px}#tt-worktime .tt-top{padding-right:16px}#tt-worktime .tt-summary{grid-template-columns:1fr}#tt-worktime [data-project-summary]{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px}#tt-worktime .tt-connection{margin-left:0;width:100%}#tt-worktime .tt-backup-row{grid-template-columns:1fr}#tt-worktime .tt-backup-row .tt-task-actions{justify-content:flex-start}}
 @media(max-width:480px){body{padding:0}#tt-worktime .tt-shell{border-radius:0;border-left:0;border-right:0;min-height:100vh}#tt-worktime .tt-brand{margin-right:0}#tt-worktime .tt-connection{width:auto;margin-left:auto}#tt-worktime .tt-top{padding:14px}#tt-worktime .tt-nav{order:3;row-gap:3px}#tt-worktime .tt-nav button{padding:7px 8px}#tt-worktime .tt-soon{display:none}#tt-worktime [data-project-summary]{grid-template-columns:1fr}#tt-worktime .tt-task-row{grid-template-columns:minmax(0,1fr) auto}#tt-worktime .tt-task-row>.tt-task-actions{grid-column:1/-1}#tt-worktime .tt-task-row>.tt-button{grid-column:auto}#tt-worktime .tt-tasks-heading{align-items:flex-start}#tt-worktime .tt-note-field{width:100%}#tt-worktime .tt-timer-line .tt-actions{width:100%;margin-left:0}#tt-worktime .tt-timer-line .tt-actions .tt-primary{flex:1}#tt-worktime .tt-content{gap:16px}#tt-worktime dialog{padding:18px}}
 @media(pointer:coarse){#tt-worktime .tt-task-actions .tt-button{min-height:44px}#tt-worktime .tt-check{min-height:44px}}
+
+/* Month calendar */
+#tt-worktime .tt-heading-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#tt-worktime .tt-composer{margin-bottom:22px}
+#tt-worktime .tt-switch .tt-composer-close{margin-left:auto}
+#tt-worktime .tt-calendar-head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+#tt-worktime .tt-month-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#tt-worktime .tt-month-title{min-width:190px;text-align:center;font-size:20px}
+#tt-worktime .tt-month-total{display:grid;gap:2px;text-align:right}
+#tt-worktime .tt-month-total strong{font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+#tt-worktime .tt-calendar .tt-filters{margin-bottom:16px}
+#tt-worktime .tt-weekday-labels{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:7px;color:var(--tt-secondary);font-size:12px;text-align:center}
+#tt-worktime .tt-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:stretch}
+#tt-worktime .tt-calendar-day{display:flex;flex-direction:column;gap:7px;background:var(--tt-panel);border:1px solid var(--tt-line);border-radius:9px;padding:10px 8px;min-width:0;min-height:122px;overflow-wrap:normal;text-align:left;color:var(--tt-ink)}
+#tt-worktime .tt-calendar-day:hover{background:var(--tt-soft)}
+#tt-worktime .tt-calendar-day[aria-pressed="true"]{border-color:var(--tt-accent);box-shadow:inset 0 0 0 1px var(--tt-accent);background:var(--tt-accent-soft)}
+#tt-worktime .tt-calendar-day.tt-other-month{background:var(--tt-bg)}
+#tt-worktime .tt-calendar-day.tt-other-month[aria-pressed="true"]{background:var(--tt-accent-soft)}
+#tt-worktime .tt-calendar-date{display:flex;align-items:center;justify-content:space-between;gap:4px;min-height:23px}
+#tt-worktime .tt-calendar-number{font-size:14px;font-weight:600;min-width:23px;text-align:center}
+#tt-worktime .tt-other-month .tt-calendar-number{color:var(--tt-secondary);font-weight:400}
+#tt-worktime .tt-today .tt-calendar-number{color:var(--tt-accent-ink);background:var(--tt-accent);border-radius:50%;height:23px;line-height:23px}
+#tt-worktime .tt-today-label{font-size:10px;color:var(--tt-accent)}
+#tt-worktime .tt-calendar-projects{display:grid;gap:5px;width:100%;margin-bottom:auto}
+#tt-worktime .tt-calendar-project{display:flex;align-items:center;justify-content:space-between;gap:3px;width:100%;font-size:11px;font-variant-numeric:tabular-nums;line-height:1.35}
+#tt-worktime .tt-calendar-project-code{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-weight:500}
+#tt-worktime .tt-calendar-project-code .tt-dot{width:5px;height:5px}
+#tt-worktime .tt-calendar-project-hours{white-space:nowrap}
+#tt-worktime .tt-calendar-empty{color:var(--tt-secondary);font-size:12px;padding:5px 2px}
+#tt-worktime .tt-calendar-day-total{font-size:11px;color:var(--tt-secondary);font-variant-numeric:tabular-nums;text-align:right;margin-top:2px;padding-top:4px;border-top:1px solid var(--tt-line)}
+#tt-worktime .tt-month-summary{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 24px;align-items:baseline;margin-top:20px;padding-top:18px;border-top:1px solid var(--tt-line)}
+#tt-worktime .tt-month-summary [data-project-summary]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px}
+#tt-worktime .tt-month-summary .tt-project-line{flex-wrap:wrap;font-size:12px}
+#tt-worktime .tt-month-summary>p{grid-column:1/-1}
+#tt-worktime dialog.tt-day-dialog{max-width:720px;max-height:calc(100dvh - 36px);overflow:auto}
+#tt-worktime .tt-day-dialog-head{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:18px}
+#tt-worktime .tt-day-dialog-head h2{margin-bottom:5px}
+#tt-worktime .tt-day-dialog-head [data-day-total]{font-variant-numeric:tabular-nums}
+#tt-worktime .tt-day-dialog-head .tt-icon-button{margin:-7px -7px 0 0}
+#tt-worktime .tt-detail-filter{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+#tt-worktime .tt-day-dialog-actions{margin-top:18px}
+#tt-worktime .tt-day-dialog .tt-entry{grid-template-columns:minmax(0,1fr) auto auto}
+#tt-worktime .tt-day-dialog .tt-entry-duration{font-size:15px}
+#tt-worktime .tt-day-dialog .tt-entry-title{overflow-wrap:anywhere}
+@media(max-width:1000px){#tt-worktime .tt-calendar-project{flex-direction:column;align-items:flex-start;gap:1px}#tt-worktime .tt-calendar-projects{gap:6px}#tt-worktime .tt-today-label{display:none}#tt-worktime .tt-month-summary{grid-template-columns:1fr}#tt-worktime .tt-month-summary [data-project-summary]{gap:12px 22px}}
+@media(max-width:760px){#tt-worktime .tt-calendar-day{padding:8px 5px}#tt-worktime .tt-month-summary [data-project-summary]{grid-template-columns:repeat(2,minmax(0,1fr))}#tt-worktime .tt-month-title{min-width:168px;font-size:18px}#tt-worktime .tt-calendar-project-code{gap:3px}#tt-worktime .tt-calendar-project-code .tt-dot{width:4px;height:4px}}
+@media(max-width:480px){#tt-worktime .tt-calendar-head{gap:12px}#tt-worktime .tt-month-nav{gap:3px}#tt-worktime .tt-month-title{font-size:17px;min-width:154px}#tt-worktime .tt-month-total{display:flex;align-items:baseline;gap:8px;text-align:left}#tt-worktime .tt-month-total strong{font-size:19px}#tt-worktime .tt-month-grid,#tt-worktime .tt-weekday-labels{gap:3px}#tt-worktime .tt-calendar-day{padding:6px 3px;border-radius:6px;min-height:106px;gap:6px}#tt-worktime .tt-calendar-project-code .tt-dot{display:none}#tt-worktime .tt-calendar-project{font-size:11px;gap:0;line-height:1.35}#tt-worktime .tt-calendar-projects{gap:6px}#tt-worktime .tt-calendar-project-hours{white-space:normal;overflow-wrap:normal}#tt-worktime .tt-calendar-project-code{white-space:normal}#tt-worktime .tt-calendar-number{font-size:12px;min-width:22px}#tt-worktime .tt-calendar-date{justify-content:flex-start}#tt-worktime .tt-calendar-day-total{font-size:11px;text-align:left;white-space:normal;overflow-wrap:normal}#tt-worktime .tt-day-dialog .tt-entry{grid-template-columns:minmax(0,1fr) auto}#tt-worktime .tt-day-dialog .tt-entry-actions{grid-column:1/-1}#tt-worktime .tt-heading-actions{width:100%}#tt-worktime .tt-calendar .tt-filters{gap:4px}#tt-worktime .tt-calendar .tt-filters button{padding:5px 8px}#tt-worktime .tt-weekday-labels{font-size:11px}#tt-worktime .tt-month-summary{gap:12px}#tt-worktime dialog.tt-day-dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);padding:15px}#tt-worktime .tt-day-dialog-actions .tt-primary{flex:1}}
