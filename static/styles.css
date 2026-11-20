@@ -188,9 +188,7 @@ body{background:light-dark(#eef1f6,#11141a);padding:28px 22px;color:light-dark(#
 
 /* Manual entry calculation */
 #tt-worktime .tt-manual.tt-manual-interval{display:grid;gap:14px;align-items:stretch}
-#tt-worktime .tt-interval-toolbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
-#tt-worktime .tt-interval-toolbar .tt-field{width:min(100%,300px)}
-#tt-worktime .tt-interval-toolbar>.tt-small{padding-bottom:10px}
+#tt-worktime .tt-interval-toolbar{display:flex;justify-content:flex-end}
 #tt-worktime .tt-interval-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 170px;gap:18px;align-items:start}
 #tt-worktime .tt-interval-point{display:grid;gap:9px;min-width:0}
 #tt-worktime .tt-interval-label{font-size:13px;font-weight:600}
@@ -203,4 +201,4 @@ body{background:light-dark(#eef1f6,#11141a);padding:28px 22px;color:light-dark(#
 #tt-worktime .tt-day-part-label{display:block;font-size:11px;font-weight:400;color:var(--tt-secondary);text-align:right;margin-top:3px}
 @media(max-width:1000px){#tt-worktime .tt-interval-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#tt-worktime .tt-duration-field{grid-column:1/-1;margin-top:0;max-width:300px}}
 @media(max-width:760px){#tt-worktime .tt-interval-fields{grid-template-columns:1fr;gap:16px}#tt-worktime .tt-duration-field{max-width:none}}
-@media(max-width:420px){#tt-worktime .tt-interval-point-fields{grid-template-columns:1fr}#tt-worktime .tt-interval-toolbar .tt-field{width:100%}#tt-worktime .tt-interval-toolbar{gap:2px}#tt-worktime .tt-interval-toolbar>.tt-small{padding-bottom:0}#tt-worktime .tt-manual-interval .tt-actions{margin-left:0}}
+@media(max-width:420px){#tt-worktime .tt-interval-point-fields{grid-template-columns:1fr}#tt-worktime .tt-manual-interval .tt-actions{margin-left:0}}

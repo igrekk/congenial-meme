@@ -55,17 +55,11 @@ function resetManualCalculation(){
 function syncManualCalculation(){
   const mode=ui.intervalMode,legacy=mode==='duration_only',bounds=mode==='bounds';
   const original=data.entries.find(entry=>entry.id===ui.editing),timerEntry=original?.source==='timer';
-  q('[data-interval-mode]').value=legacy?'duration_only':'linked';
-  for(const option of q('[data-interval-mode]').options)option.disabled=timerEntry&&option.value!=='duration_only';
-  q('[data-start-time-field]').hidden=legacy;q('[data-end-point]').hidden=legacy;
-  q('[data-start-label]').textContent=legacy?'Рабочий день':'Начало';
-  q('[data-date-label]').textContent=legacy?'Дата':'Дата начала';
-  q('[data-duration-label]').textContent='Длительность';
   q('[data-duration]').readOnly=false;
   q('[data-duration]').placeholder='2:30 или 2,5';
-  q('[data-end-date]').readOnly=false;q('[data-end-time]').readOnly=false;
+  for(const selector of ['[data-start-time]','[data-end-date]','[data-end-time]'])q(selector).disabled=timerEntry;
   q('[data-start-time]').required=!legacy;q('[data-end-date]').required=bounds;q('[data-end-time]').required=bounds;
-  q('#tt-duration-help').textContent=legacy?'2,5 часа = 2 ч 30 мин · до 24 часов за запись':'Длительность изменяет окончание; окончание изменяет длительность.';
+  q('#tt-duration-help').textContent=legacy?(timerEntry?'У записи таймера можно исправить дату и длительность.':'В старой записи нет времени начала. Укажите его, чтобы рассчитать окончание.'):'Длительность изменяет окончание; окончание изменяет длительность.';
   q('[data-interval-group-note]').hidden=!original?.manual_group_id;
   q('[data-delete]').textContent=original?.manual_group_id?'Удалить интервал':'Удалить';
   const result=intervalCalculation();
@@ -253,19 +247,20 @@ async function startFromComposer(){
 }
 q('[data-entry-form]').addEventListener('submit',event=>{event.preventDefault();if(ui.mode==='manual')saveEntry();else if(!data.timer)startFromComposer();});
 q('[data-project]').addEventListener('change',updateOptions);
-q('[data-interval-mode]').addEventListener('change',event=>{ui.intervalMode=event.target.value==='duration_only'?'duration_only':'bounds';timingDirty=true;durationDirty=true;showError('');syncManualCalculation();});
 for(const selector of ['[data-date]','[data-start-time]','[data-end-date]','[data-end-time]','[data-duration]']){
   const edited=finalize=>{
     timingDirty=true;
+    if(selector==='[data-start-time]'&&ui.intervalMode==='duration_only'&&q('[data-start-time]').value)ui.intervalMode=q('[data-end-time]').value?'bounds':'duration';
     if(selector==='[data-duration]'){
       durationDirty=true;if(ui.intervalMode!=='duration_only')ui.intervalMode='duration';
       if(finalize){const normalized=normalizeMinuteDuration(q('[data-duration]').value,ui.intervalMode==='duration_only'?86400:31*86400);if(Number.isFinite(normalized))q('[data-duration]').value=clock(normalized);}
     }
     if(selector==='[data-end-date]'||selector==='[data-end-time]'){
-      if(ui.intervalMode!=='duration_only')ui.intervalMode='bounds';
+      ui.intervalMode='bounds';
       if(selector==='[data-end-date]')endDateTouched=true;
     }
     if(selector==='[data-date]'&&!endDateTouched&&!q('[data-end-time]').value&&ui.intervalMode==='bounds')q('[data-end-date]').value=q('[data-date]').value;
+    if(selector==='[data-date]'&&ui.intervalMode==='duration_only')q('[data-end-date]').value=q('[data-date]').value;
     if(finalize&&(selector==='[data-start-time]'||selector==='[data-end-time]'))q(selector).value=q(selector).value.slice(0,5);
     syncManualCalculation();
   };

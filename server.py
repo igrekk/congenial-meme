@@ -18,7 +18,7 @@ from backend import DomainError, Tracker
 from backend.holidays import HolidayService
 
 APP_NAME = "work-time"
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 1_048_576
 CONTENT_SECURITY_POLICY = (
