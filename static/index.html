@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Рабочее время</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <div id="tt-worktime">
+    <div class="tt-shell">
+      <header class="tt-top">
+        <a class="tt-brand" href="/" aria-label="Рабочее время — главная"><span class="tt-brand-mark" aria-hidden="true">◷</span>Рабочее время</a>
+        <nav class="tt-nav" aria-label="Разделы приложения">
+          <button type="button" data-view="journal" aria-current="page">Журнал</button>
+          <button type="button" data-view="tasks">Задачи</button>
+          <button type="button" data-view="data">Данные</button>
+          <button type="button" disabled data-permanent-disabled aria-label="Отчеты — в следующей версии">Отчеты <span class="tt-soon">позже</span></button>
+          <button type="button" disabled data-permanent-disabled aria-label="Статистика — в следующей версии">Статистика <span class="tt-soon">позже</span></button>
+        </nav>
+        <span class="tt-connection" data-connection>Подключение…</span>
+      </header>
+      <main class="tt-main">
+        <div class="tt-heading"><div><h1 data-page-title>Время под контролем</h1><p class="tt-muted tt-small">Проекты, задачи и рабочие часы — в одном месте</p></div><button class="tt-button tt-timer-indicator" data-return-timer type="button" hidden aria-label="Открыть активный таймер"><span data-global-clock></span></button></div>
+        <div class="tt-error-banner" data-error role="alert" hidden></div>
+        <section data-journal aria-label="Журнал рабочего времени">
+          <form class="tt-panel tt-composer" data-entry-form novalidate>
+            <div class="tt-switch" aria-label="Способ учета времени">
+              <button type="button" data-mode="manual" aria-pressed="true">＋ Внести часы</button>
+              <button type="button" data-mode="timer" aria-pressed="false">◷ Таймер</button>
+            </div>
+            <div class="tt-fields" data-composer-fields>
+              <label class="tt-field">Проект<select data-project aria-label="Проект записи"><option>INAL</option><option>INAC</option><option>GCVU</option><option>ECGP</option></select></label>
+              <label class="tt-field">Задача<input data-task list="tt-task-options" placeholder="Над чем работали?" maxlength="160" autocomplete="off" required></label>
+              <datalist id="tt-task-options"></datalist>
+            </div>
+            <div class="tt-manual" data-manual-fields>
+              <label class="tt-field">Дата<input data-date type="date" required></label>
+              <label class="tt-field">Длительность<input data-duration placeholder="2:30 или 2,5" inputmode="decimal" aria-describedby="tt-duration-help" required></label>
+              <div class="tt-actions"><button class="tt-button tt-primary" type="submit" data-save data-mutate>Добавить запись</button><button class="tt-button tt-quiet" type="button" data-cancel hidden>Отмена</button><button class="tt-button tt-danger" type="button" data-delete data-mutate hidden>Удалить</button></div>
+              <span id="tt-duration-help" class="tt-small tt-muted">2,5 часа = 2 ч 30 мин</span>
+            </div>
+            <label class="tt-field" data-note-field>Примечание <span class="tt-muted tt-normal">необязательно</span><input data-note placeholder="Детали работы или результат" maxlength="2000"></label>
+            <div data-timer-fields hidden>
+              <div class="tt-timer-line" data-timer-idle><span class="tt-clock">00:00:00</span><span class="tt-muted tt-small">Одна задача · один таймер</span><button class="tt-button tt-primary" data-start data-mutate type="button">▶ Начать</button></div>
+              <div class="tt-active-timer" data-timer-active hidden>
+                <div><strong data-active-task></strong><div class="tt-muted tt-small" data-active-status></div></div>
+                <div class="tt-timer-line"><span class="tt-clock" data-elapsed>00:00:00</span><div class="tt-actions"><button class="tt-button" data-pause data-mutate type="button">Пауза</button><button class="tt-button tt-primary" data-stop data-mutate type="button">Завершить и записать</button></div></div>
+              </div>
+              <p class="tt-timer-help tt-small tt-muted">Таймер продолжает считать при закрытии окна и во время сна компьютера. При необходимости длительность записи можно исправить после завершения.</p>
+            </div>
+          </form>
+          <section class="tt-week" aria-label="Обзор недели">
+            <div class="tt-week-head">
+              <div class="tt-week-nav"><button class="tt-icon-button" data-week="-1" type="button" aria-label="Предыдущая неделя">←</button><span class="tt-week-range" data-range></span><button class="tt-icon-button" data-week="1" type="button" aria-label="Следующая неделя">→</button><button class="tt-button tt-quiet tt-small" data-today type="button">Сегодня</button></div>
+              <div><span class="tt-week-total" data-week-total>—</span><span class="tt-muted tt-small"> за неделю</span></div>
+            </div>
+            <div class="tt-days" data-days aria-label="Дни недели"></div>
+          </section>
+          <div class="tt-content">
+            <section aria-label="Записи выбранного дня">
+              <div class="tt-section-top"><h2 data-day-title></h2><span class="tt-small tt-muted" data-day-total></span></div>
+              <div class="tt-filters" data-filters aria-label="Фильтр по проекту"></div>
+              <div class="tt-warning tt-small" data-day-warning hidden>За день записано более 24 часов. Проверьте длительность записей.</div>
+              <div class="tt-panel" data-entries><div class="tt-empty">Загружаем записи…</div></div>
+            </section>
+            <aside class="tt-aside tt-panel tt-summary" aria-label="Итоги всех проектов за неделю"><h3>Все проекты · неделя</h3><div data-project-summary></div><p class="tt-summary-foot">Таймер попадет в итоги после завершения.</p></aside>
+          </div>
+        </section>
+        <section data-tasks-view hidden aria-label="Список задач">
+          <div class="tt-tasks-heading"><h2>Мои задачи</h2><label class="tt-check"><input type="checkbox" data-show-archive>Показать архивные</label></div>
+          <form class="tt-panel tt-task-form" data-task-form novalidate>
+            <div class="tt-fields"><label class="tt-field">Проект<select data-new-project><option>INAL</option><option>INAC</option><option>GCVU</option><option>ECGP</option></select></label><label class="tt-field">Новая задача<input data-new-task placeholder="Название задачи" maxlength="160" required></label></div>
+            <div class="tt-actions"><button class="tt-button tt-primary" type="submit" data-create-task data-mutate>Создать задачу</button><span class="tt-small tt-muted">Время начнет учитываться после запуска таймера</span></div>
+          </form>
+          <div class="tt-panel" data-task-list></div>
+        </section>
+        <section data-data-view hidden aria-label="Данные и резервные копии">
+          <div class="tt-data-intro"><h2>Резервные копии</h2><p class="tt-muted">Копия сохраняет проекты, задачи, записи и состояние таймера.</p><button class="tt-button tt-primary" data-create-backup data-mutate type="button">Создать резервную копию</button></div>
+          <div class="tt-panel" data-backups><div class="tt-empty">Резервных копий пока нет.</div></div>
+          <p class="tt-small tt-muted tt-data-help">Для переноса на другой компьютер скачайте копию. Перед восстановлением приложение автоматически сохранит текущие данные. Работающий таймер сначала нужно завершить.</p>
+        </section>
+        <div class="tt-notice" aria-live="polite"><span data-notice>Данные сохраняются на этом компьютере.</span><button type="button" data-undo hidden>Отменить удаление</button></div>
+      </main>
+    </div>
+    <dialog data-rename-dialog aria-labelledby="rename-title">
+      <form data-rename-form><h2 id="rename-title">Название задачи</h2><label class="tt-field">Задача<input data-rename-title maxlength="160" required></label><div class="tt-dialog-actions"><button class="tt-button" data-close-dialog type="button">Отмена</button><button class="tt-button tt-primary" type="submit">Сохранить</button></div></form>
+    </dialog>
+    <dialog data-restore-dialog aria-labelledby="restore-title">
+      <form data-restore-form><h2 id="restore-title">Восстановить резервную копию?</h2><p>Текущие данные будут заменены данными выбранной копии. Перед заменой приложение сохранит текущую версию.</p><p class="tt-small tt-muted" data-restore-name></p><div class="tt-dialog-actions"><button class="tt-button" data-close-dialog type="button">Отмена</button><button class="tt-button tt-primary" type="submit">Восстановить</button></div></form>
+    </dialog>
+    <noscript>Для работы приложения включите JavaScript в браузере.</noscript>
+  </div>
+</body>
+</html>

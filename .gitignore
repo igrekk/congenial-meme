@@ -1,0 +1,27 @@
+# Personal records and all database backup files
+/data/
+/backups/
+*.sqlite
+*.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.db
+*.db-*
+
+# Python and local tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+node_modules/
+
+# Local QA and generated prototype previews
+.qa*/
+preview*.png
+preview.html
+/qa.cjs
+*.log
