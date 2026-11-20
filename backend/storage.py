@@ -11,7 +11,7 @@ import uuid
 
 
 APPLICATION_ID = 0x57544B52
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 _locks = {}
 _locks_guard = threading.Lock()
 
@@ -47,6 +47,19 @@ CREATE TABLE IF NOT EXISTS timer_segments (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS one_open_segment
   ON timer_segments(session_id) WHERE ended_at IS NULL;
+CREATE TABLE IF NOT EXISTS manual_groups (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  started_at TEXT,
+  ended_at TEXT,
+  duration_seconds INTEGER NOT NULL CHECK(duration_seconds BETWEEN 1 AND 2678400),
+  note TEXT NOT NULL DEFAULT '',
+  request_id TEXT UNIQUE,
+  request_fingerprint TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  deleted_at INTEGER
+);
 CREATE TABLE IF NOT EXISTS time_entries (
   id TEXT PRIMARY KEY,
   task_id TEXT NOT NULL REFERENCES tasks(id),
@@ -60,6 +73,7 @@ CREATE TABLE IF NOT EXISTS time_entries (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   deleted_at INTEGER,
+  manual_group_id TEXT REFERENCES manual_groups(id),
   UNIQUE(session_id,work_date)
 );
 CREATE INDEX IF NOT EXISTS entries_by_date ON time_entries(work_date);
@@ -80,13 +94,30 @@ class Storage:
             with self.connect() as connection:
                 version = connection.execute("PRAGMA user_version").fetchone()[0]
                 app_id = connection.execute("PRAGMA application_id").fetchone()[0]
-                if version not in (0, SCHEMA_VERSION) or app_id not in (0, APPLICATION_ID):
+                if version not in (0, 1, SCHEMA_VERSION) or app_id not in (0, APPLICATION_ID):
                     raise ValueError("Неподдерживаемая версия или формат базы данных.")
-                connection.executescript(SCHEMA)
-                connection.execute(f"PRAGMA application_id={APPLICATION_ID}")
-                connection.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
-                connection.executemany("INSERT OR IGNORE INTO projects(code,name) VALUES (?,?)",
-                                       [(code, code) for code in ("INAL", "INAC", "GCVU", "ECGP")])
+            if version == 1:
+                self._backup_locked("before-migration-v1")
+            with self.connect() as connection:
+                self.initialize_connection(connection, version)
+
+    @staticmethod
+    def initialize_connection(connection, version):
+        """Upgrade in one transaction; callers have already protected the old file."""
+        migration = ""
+        if version == 1:
+            migration = "ALTER TABLE time_entries ADD COLUMN manual_group_id TEXT REFERENCES manual_groups(id);"
+        sql = ("BEGIN IMMEDIATE;\n" + SCHEMA + "\n" + migration + "\n"
+               "CREATE UNIQUE INDEX IF NOT EXISTS manual_group_day ON time_entries(manual_group_id,work_date) "
+               "WHERE manual_group_id IS NOT NULL;\n"
+               f"PRAGMA application_id={APPLICATION_ID};\nPRAGMA user_version={SCHEMA_VERSION};\n"
+               "INSERT OR IGNORE INTO projects(code,name) VALUES "
+               "('INAL','INAL'),('INAC','INAC'),('GCVU','GCVU'),('ECGP','ECGP');\nCOMMIT;")
+        try:
+            connection.executescript(sql)
+        except BaseException:
+            connection.rollback()
+            raise
 
     @contextmanager
     def connect(self):
@@ -155,7 +186,8 @@ class Storage:
         try:
             if connection.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID:
                 raise ValueError("Файл не является резервной копией учета времени.")
-            if connection.execute("PRAGMA user_version").fetchone()[0] != SCHEMA_VERSION:
+            version = connection.execute("PRAGMA user_version").fetchone()[0]
+            if version not in (1, SCHEMA_VERSION):
                 raise ValueError("Версия резервной копии не поддерживается.")
             if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise ValueError("Резервная копия повреждена.")
@@ -170,6 +202,16 @@ class Storage:
                 "request_id,request_fingerprint,created_at,updated_at,deleted_at FROM time_entries",
             ):
                 connection.execute(sql + " LIMIT 1").fetchone()
+            if version >= 2:
+                connection.execute("SELECT id,task_id,started_at,ended_at,duration_seconds,note,request_id,"
+                                   "request_fingerprint,created_at,updated_at,deleted_at FROM manual_groups LIMIT 1").fetchone()
+                connection.execute("SELECT manual_group_id FROM time_entries LIMIT 1").fetchone()
+            required_indexes = {"one_unfinished_timer", "one_open_segment", "entries_by_date", "entries_by_task"}
+            if version >= 2:
+                required_indexes.add("manual_group_day")
+            indexes = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+            if not required_indexes.issubset(indexes):
+                raise ValueError("В резервной копии отсутствуют обязательные индексы.")
             codes = {row[0] for row in connection.execute("SELECT code FROM projects")}
             if codes != {"INAL", "INAC", "GCVU", "ECGP"}:
                 raise ValueError("В резервной копии отсутствуют проекты.")
@@ -190,6 +232,10 @@ class Storage:
                 destination = sqlite3.connect(temporary)
                 try:
                     source.backup(destination)
+                    version = destination.execute("PRAGMA user_version").fetchone()[0]
+                    if version == 1:
+                        destination.execute("PRAGMA foreign_keys=ON")
+                        self.initialize_connection(destination, version)
                 finally:
                     source.close()
                     destination.close()

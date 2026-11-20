@@ -15,9 +15,10 @@ from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
 from backend import DomainError, Tracker
+from backend.holidays import HolidayService
 
 APP_NAME = "work-time"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 APP_DIR = Path(__file__).resolve().parent
 MAX_BODY_BYTES = 1_048_576
 CONTENT_SECURITY_POLICY = (
@@ -33,6 +34,7 @@ class WorkTimeServer(ThreadingHTTPServer):
 
     def __init__(self, address, tracker, static_dir):
         self.tracker = tracker
+        self.holidays = HolidayService(tracker.storage.directory)
         self.static_dir = Path(static_dir).resolve()
         super().__init__(address, WorkTimeHandler)
 
@@ -106,6 +108,9 @@ class WorkTimeHandler(BaseHTTPRequestHandler):
         if path == "/api/state":
             params = parse_qs(query, keep_blank_values=True)
             return self._json(200, tracker.state(params.get("from", [None])[0], params.get("to", [None])[0]))
+        if path == '/api/holidays':
+            params = parse_qs(query)
+            return self._json(200,self.server.holidays.calendar(params.get('country',['BY'])[0],params.get('year',['2026'])[0]))
         if path == "/api/backups":
             return self._json(200, {"backups": tracker.list_backups()})
         match = re.fullmatch(r"/api/backups/([A-Za-z0-9_.-]{1,180})/download", path)
@@ -141,6 +146,8 @@ class WorkTimeHandler(BaseHTTPRequestHandler):
         tracker = self.server.tracker
         method = self.command
         if method == "POST":
+            if path == '/api/holidays/load':
+                return self._json(200,self.server.holidays.calendar(body.get('country','BY'),body.get('year',2026),refresh=bool(body.get('refresh',True))))
             exact = {
                 "/api/tasks": lambda: tracker.create_task(body),
                 "/api/time-entries": lambda: tracker.create_entry(body),

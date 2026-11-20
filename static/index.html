@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="light dark">
   <title>Рабочее время</title>
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/holidays.css">
   <script src="/app.js" type="module"></script>
 </head>
 <body>
@@ -37,18 +38,24 @@
               <label class="tt-field">Задача<input data-task list="tt-task-options" placeholder="Над чем работали?" maxlength="160" autocomplete="off" required></label>
               <datalist id="tt-task-options"></datalist>
             </div>
-            <div class="tt-manual" data-manual-fields>
-              <label class="tt-field">Дата<input data-date type="date" required></label>
-              <label class="tt-field">Длительность<input data-duration placeholder="2:30 или 2,5" inputmode="decimal" aria-describedby="tt-duration-help" required></label>
+            <div class="tt-manual tt-manual-interval" data-manual-fields>
+              <div class="tt-interval-toolbar"><label class="tt-field">Учет времени<select data-interval-mode><option value="linked">Начало, окончание и длительность</option><option value="duration_only">Дата и длительность</option></select></label><span class="tt-small tt-muted">Московское время</span></div>
+              <div class="tt-interval-fields">
+                <div class="tt-interval-point"><span class="tt-interval-label" data-start-label>Начало</span><div class="tt-interval-point-fields"><label class="tt-field"><span data-date-label>Дата начала</span><input data-date type="date" required></label><label class="tt-field" data-start-time-field>Время начала<input data-start-time type="time" step="60" required></label></div></div>
+                <div class="tt-interval-point" data-end-point><span class="tt-interval-label">Окончание</span><div class="tt-interval-point-fields"><label class="tt-field">Дата окончания<input data-end-date type="date" required></label><label class="tt-field">Время окончания<input data-end-time type="time" step="60" required></label></div></div>
+                <label class="tt-field tt-duration-field"><span data-duration-label>Длительность</span><input data-duration placeholder="2:30 или 2,5" inputmode="decimal" aria-describedby="tt-duration-help" required><span id="tt-duration-help" class="tt-small tt-muted">Длительность изменяет окончание; окончание изменяет длительность.</span></label>
+              </div>
+              <p class="tt-interval-result" data-interval-result aria-live="polite"></p>
+              <p class="tt-interval-validation" data-interval-error role="alert" hidden></p>
+              <p class="tt-small tt-muted" data-interval-group-note hidden>Редактируется весь интервал, включая его части в другие дни.</p>
               <div class="tt-actions"><button class="tt-button tt-primary" type="submit" data-save data-mutate>Добавить запись</button><button class="tt-button tt-quiet" type="button" data-cancel hidden>Отмена</button><button class="tt-button tt-danger" type="button" data-delete data-mutate hidden>Удалить</button></div>
-              <span id="tt-duration-help" class="tt-small tt-muted">2,5 часа = 2 ч 30 мин</span>
             </div>
             <label class="tt-field" data-note-field>Примечание <span class="tt-muted tt-normal">необязательно</span><input data-note placeholder="Детали работы или результат" maxlength="2000"></label>
             <div data-timer-fields hidden>
-              <div class="tt-timer-line" data-timer-idle><span class="tt-clock">00:00:00</span><span class="tt-muted tt-small">Одна задача · один таймер</span><button class="tt-button tt-primary" data-start data-mutate type="button">▶ Начать</button></div>
+              <div class="tt-timer-line" data-timer-idle><span class="tt-clock">00:00</span><span class="tt-muted tt-small">Одна задача · один таймер</span><button class="tt-button tt-primary" data-start data-mutate type="button">▶ Начать</button></div>
               <div class="tt-active-timer" data-timer-active hidden>
                 <div><strong data-active-task></strong><div class="tt-muted tt-small" data-active-status></div></div>
-                <div class="tt-timer-line"><span class="tt-clock" data-elapsed>00:00:00</span><div class="tt-actions"><button class="tt-button" data-pause data-mutate type="button">Пауза</button><button class="tt-button tt-primary" data-stop data-mutate type="button">Завершить и записать</button></div></div>
+                <div class="tt-timer-line"><span class="tt-clock" data-elapsed>00:00</span><div class="tt-actions"><button class="tt-button" data-pause data-mutate type="button">Пауза</button><button class="tt-button tt-primary" data-stop data-mutate type="button">Завершить и записать</button></div></div>
               </div>
               <p class="tt-timer-help tt-small tt-muted">Таймер продолжает считать при закрытии окна и во время сна компьютера. При необходимости длительность записи можно исправить после завершения.</p>
             </div>

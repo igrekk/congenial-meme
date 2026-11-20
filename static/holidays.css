@@ -1,0 +1,48 @@
+/* Country calendars are independent of the project color palette. */
+#tt-worktime{--tt-holiday-BY:light-dark(#a9425c,#f0a1b4);--tt-holiday-BY-soft:light-dark(#fff0f3,#34252c);--tt-holiday-GE:light-dark(#5758b7,#b4b4ff);--tt-holiday-GE-soft:light-dark(#efefff,#2d2d47);--tt-holiday-KZ:light-dark(#087f77,#79d4c9);--tt-holiday-KZ-soft:light-dark(#e7f8f4,#203b38);--tt-holiday-CZ:light-dark(#92671c,#e5c27e);--tt-holiday-CZ-soft:light-dark(#fff6df,#3b3220)}
+#tt-worktime .tt-holiday-country-BY{--tt-country-color:var(--tt-holiday-BY);--tt-country-soft:var(--tt-holiday-BY-soft)}
+#tt-worktime .tt-holiday-country-GE{--tt-country-color:var(--tt-holiday-GE);--tt-country-soft:var(--tt-holiday-GE-soft)}
+#tt-worktime .tt-holiday-country-KZ{--tt-country-color:var(--tt-holiday-KZ);--tt-country-soft:var(--tt-holiday-KZ-soft)}
+#tt-worktime .tt-holiday-country-CZ{--tt-country-color:var(--tt-holiday-CZ);--tt-country-soft:var(--tt-holiday-CZ-soft)}
+#tt-worktime .tt-holiday-controls{display:grid;gap:7px;margin:0 0 16px;min-width:0}
+#tt-worktime .tt-holiday-toolbar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}
+#tt-worktime .tt-holiday-country-list{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#tt-worktime .tt-holiday-country{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:5px 9px;background:var(--tt-panel);border:1px solid var(--tt-line);border-radius:7px;font-size:12px;white-space:nowrap;cursor:pointer}
+#tt-worktime .tt-holiday-country input,#tt-worktime .tt-holiday-option input{accent-color:var(--tt-country-color);margin:0;flex-shrink:0;width:14px;height:14px}
+#tt-worktime .tt-holiday-swatch{height:7px;width:7px;display:inline-block;border-radius:50%;background:var(--tt-country-color);flex-shrink:0}
+#tt-worktime .tt-holiday-country:has(input:checked){background:var(--tt-country-soft)}
+#tt-worktime .tt-holiday-add,#tt-worktime .tt-holiday-refresh{font-size:12px;padding:6px 10px;min-height:34px}
+#tt-worktime .tt-holiday-refresh{margin-left:auto}
+#tt-worktime .tt-holiday-status{font-size:11px;color:var(--tt-secondary);min-height:17px;overflow-wrap:anywhere}
+#tt-worktime .tt-holiday-error{color:var(--tt-danger);font-size:12px;overflow-wrap:anywhere}
+#tt-worktime .tt-holiday-sources{font-size:12px;color:var(--tt-secondary);max-width:100%;min-width:0}
+#tt-worktime .tt-holiday-sources summary{cursor:pointer;width:fit-content;padding:2px 0}
+#tt-worktime .tt-holiday-source-content{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:16px;margin:12px 0 4px;padding:14px 0;border-top:1px solid var(--tt-line);border-bottom:1px solid var(--tt-line)}
+#tt-worktime .tt-holiday-source{display:grid;gap:5px;align-content:start;min-width:0;overflow-wrap:anywhere}
+#tt-worktime .tt-holiday-source h3{color:var(--tt-ink);font-size:12px}
+#tt-worktime .tt-holiday-source ul{margin:3px 0 0;padding-left:17px;display:grid;gap:5px}
+#tt-worktime .tt-holiday-source a,#tt-worktime .tt-day-holiday a{color:var(--tt-accent);overflow-wrap:anywhere}
+#tt-worktime .tt-calendar-day.tt-country-rest:not([aria-pressed="true"]):not(.tt-other-month){background:light-dark(#fff5f7,#2a232a)}
+#tt-worktime .tt-calendar-day.tt-country-holiday:not([aria-pressed="true"]):not(.tt-other-month){background:var(--tt-holiday-BY-soft)}
+#tt-worktime .tt-calendar-day.tt-country-workday:not([aria-pressed="true"]):not(.tt-other-month){background:var(--tt-panel)}
+#tt-worktime .tt-country-rest .tt-calendar-number{color:var(--tt-holiday-BY)}
+#tt-worktime .tt-country-rest.tt-today .tt-calendar-number{color:var(--tt-accent-ink)}
+#tt-worktime .tt-calendar-country-markers{display:flex;gap:3px;flex-wrap:wrap;align-items:center;min-width:0;margin-top:3px;width:100%}
+#tt-worktime .tt-holiday-badge{display:inline-flex;justify-content:center;align-items:center;gap:1px;min-width:21px;border-radius:3px;padding:1px 3px;background:var(--tt-country-soft);color:var(--tt-country-color);font-size:11px;font-weight:500;line-height:1.3;white-space:nowrap}
+#tt-worktime .tt-holiday-badge--workday{background:transparent;box-shadow:inset 0 0 0 1px var(--tt-country-color)}
+#tt-worktime .tt-holiday-work-symbol{font-size:11px}
+#tt-worktime .tt-other-month .tt-calendar-country-markers{opacity:.75}
+#tt-worktime .tt-day-holidays{display:grid;gap:8px;margin:0 0 15px;padding:0 0 14px;border-bottom:1px solid var(--tt-line)}
+#tt-worktime .tt-day-holiday{display:grid;grid-template-columns:105px minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:12px;overflow-wrap:anywhere}
+#tt-worktime .tt-day-holiday-country{display:inline-flex;gap:6px;align-items:center;color:var(--tt-country-color);font-weight:500}
+#tt-worktime .tt-day-holiday-name{color:var(--tt-ink);min-width:0}
+#tt-worktime dialog.tt-holiday-dialog{max-width:470px;display:none}
+#tt-worktime dialog.tt-holiday-dialog[open]{display:grid;gap:18px}
+#tt-worktime .tt-holiday-dialog-heading{display:flex;justify-content:space-between;gap:12px;align-items:start}
+#tt-worktime .tt-holiday-dialog-heading .tt-icon-button{margin:-7px -7px 0 0}
+#tt-worktime .tt-holiday-options{display:grid;gap:9px}
+#tt-worktime .tt-holiday-option{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--tt-country-soft);border:1px solid var(--tt-line);border-radius:7px;cursor:pointer;font-size:14px}
+#tt-worktime .tt-holiday-option .tt-holiday-swatch{width:8px;height:8px}
+@media(max-width:760px){#tt-worktime .tt-holiday-refresh{margin-left:0}#tt-worktime .tt-holiday-toolbar{gap:7px}#tt-worktime .tt-day-holiday{grid-template-columns:90px minmax(0,1fr)}#tt-worktime .tt-day-holiday>a{grid-column:2}}
+@media(max-width:480px){#tt-worktime .tt-holiday-country-list{width:100%;gap:5px}#tt-worktime .tt-holiday-country{padding:5px 7px;min-height:34px}#tt-worktime .tt-holiday-controls{margin-bottom:13px}#tt-worktime .tt-calendar-country-markers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 1px}#tt-worktime .tt-holiday-badge{min-width:0;padding:1px 0;font-size:11px;line-height:1.3}#tt-worktime .tt-holiday-badge--workday{grid-column:1/-1}#tt-worktime .tt-day-holiday{grid-template-columns:1fr;gap:3px}#tt-worktime .tt-day-holiday>a{grid-column:1}#tt-worktime .tt-holiday-source-content{gap:13px}#tt-worktime dialog.tt-holiday-dialog{padding:18px}}
+@media(pointer:coarse){#tt-worktime .tt-holiday-country,#tt-worktime .tt-holiday-add,#tt-worktime .tt-holiday-refresh,#tt-worktime .tt-holiday-option{min-height:44px}}

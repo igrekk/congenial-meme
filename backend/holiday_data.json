@@ -1,0 +1,449 @@
+{
+  "reviewed_at": "2026-11-20",
+  "countries": {
+    "BY": {
+      "name": "Беларусь",
+      "sources": [
+        {
+          "title": "Совет Министров: постановление №397 от 22.07.2025",
+          "url": "https://pravo.by/document/?guid=3961&p0=C22500397"
+        },
+        {
+          "title": "Официальное сообщение Минтруда о праздниках и переносе 2026",
+          "url": "https://t.me/s/MintrudSocBelarus/18489"
+        }
+      ],
+      "fixed": [
+        {
+          "month": 1,
+          "day": 1,
+          "name": "Новый год",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 1,
+          "day": 2,
+          "name": "Новый год",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 1,
+          "day": 7,
+          "name": "Православное Рождество",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 3,
+          "day": 8,
+          "name": "День женщин",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 5,
+          "day": 1,
+          "name": "Праздник труда",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 5,
+          "day": 9,
+          "name": "День Победы",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 7,
+          "day": 3,
+          "name": "День Независимости",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 11,
+          "day": 7,
+          "name": "День Октябрьской революции",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        },
+        {
+          "month": 12,
+          "day": 25,
+          "name": "Католическое Рождество",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        }
+      ],
+      "easter": "orthodox",
+      "easter_offsets": [
+        {
+          "offset": 9,
+          "name": "Радуница",
+          "source_url": "https://t.me/s/MintrudSocBelarus/18489"
+        }
+      ],
+      "years": {
+        "2026": {
+          "coverage": "verified",
+          "transfers": [
+            {
+              "date": "2026-04-20",
+              "name": "Выходной: рабочий день перенесен на 25 апреля",
+              "source_url": "https://pravo.by/document/?guid=3961&p0=C22500397"
+            }
+          ],
+          "workdays": [
+            {
+              "date": "2026-04-25",
+              "name": "Рабочая суббота: перенос с 20 апреля",
+              "source_url": "https://pravo.by/document/?guid=3961&p0=C22500397"
+            }
+          ]
+        }
+      }
+    },
+    "GE": {
+      "name": "Грузия",
+      "sources": [
+        {
+          "title": "Трудовой кодекс Грузии, статья 30, окончательная редакция",
+          "url": "https://matsne.gov.ge/en/document/view/1155567"
+        }
+      ],
+      "fixed": [
+        {
+          "month": 1,
+          "day": 1,
+          "name": "Новый год",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 1,
+          "day": 2,
+          "name": "Новый год",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 1,
+          "day": 7,
+          "name": "Рождество",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 1,
+          "day": 19,
+          "name": "Крещение",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 3,
+          "day": 3,
+          "name": "День матери",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 3,
+          "day": 8,
+          "name": "Международный женский день",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 4,
+          "day": 9,
+          "name": "День национального единства",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 5,
+          "day": 9,
+          "name": "День Победы",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 5,
+          "day": 12,
+          "name": "День святого Андрея",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 5,
+          "day": 17,
+          "name": "День семьи и уважения родителей",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 5,
+          "day": 26,
+          "name": "День независимости",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 8,
+          "day": 28,
+          "name": "Мариамоба",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 10,
+          "day": 14,
+          "name": "Мцхетоба",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "month": 11,
+          "day": 23,
+          "name": "Гиоргоба",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        }
+      ],
+      "easter": "orthodox",
+      "easter_offsets": [
+        {
+          "offset": -2,
+          "name": "Страстная пятница",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "offset": -1,
+          "name": "Великая суббота",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "offset": 0,
+          "name": "Пасха",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        },
+        {
+          "offset": 1,
+          "name": "Пасхальный понедельник",
+          "source_url": "https://matsne.gov.ge/en/document/view/1155567"
+        }
+      ],
+      "years": {}
+    },
+    "CZ": {
+      "name": "Чехия",
+      "sources": [
+        {
+          "title": "Министерство труда Чехии: закон №245/2000, §§1–3",
+          "url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        }
+      ],
+      "fixed": [
+        {
+          "month": 1,
+          "day": 1,
+          "name": "Новый год и восстановление независимого чешского государства",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 5,
+          "day": 1,
+          "name": "Праздник труда",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 5,
+          "day": 8,
+          "name": "День Победы",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 7,
+          "day": 5,
+          "name": "День Кирилла и Мефодия",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 7,
+          "day": 6,
+          "name": "День Яна Гуса",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 9,
+          "day": 28,
+          "name": "День чешской государственности",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 10,
+          "day": 28,
+          "name": "День образования Чехословакии",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 11,
+          "day": 17,
+          "name": "День борьбы за свободу и демократию",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 12,
+          "day": 24,
+          "name": "Сочельник",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 12,
+          "day": 25,
+          "name": "Рождество",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "month": 12,
+          "day": 26,
+          "name": "Второй день Рождества",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        }
+      ],
+      "easter": "western",
+      "easter_offsets": [
+        {
+          "offset": -2,
+          "name": "Страстная пятница",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        },
+        {
+          "offset": 1,
+          "name": "Пасхальный понедельник",
+          "source_url": "https://ppropo.mpsv.cz/zakon_245_2000"
+        }
+      ],
+      "years": {
+        "2026": {
+          "coverage": "verified"
+        }
+      }
+    },
+    "KZ": {
+      "name": "Казахстан",
+      "sources": [
+        {
+          "title": "Государственный портал: производственный календарь 2026, обновлен 29.05.2026",
+          "url": "https://www.gov.kz/article/16887?lang=ru"
+        }
+      ],
+      "fixed": [
+        {
+          "month": 1,
+          "day": 1,
+          "name": "Новый год",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 1,
+          "day": 2,
+          "name": "Новый год",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 1,
+          "day": 7,
+          "name": "Православное Рождество",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 3,
+          "day": 8,
+          "name": "Международный женский день",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 3,
+          "day": 15,
+          "name": "День Конституции",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 3,
+          "day": 21,
+          "name": "Наурыз",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 3,
+          "day": 22,
+          "name": "Наурыз",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 3,
+          "day": 23,
+          "name": "Наурыз",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 5,
+          "day": 1,
+          "name": "День единства народа",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 5,
+          "day": 7,
+          "name": "День защитника Отечества",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 5,
+          "day": 9,
+          "name": "День Победы",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 7,
+          "day": 6,
+          "name": "День столицы",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 10,
+          "day": 25,
+          "name": "День Республики",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        },
+        {
+          "month": 12,
+          "day": 16,
+          "name": "День независимости",
+          "source_url": "https://www.gov.kz/article/16887?lang=ru"
+        }
+      ],
+      "years": {
+        "2026": {
+          "coverage": "verified",
+          "holidays": [
+            {
+              "date": "2026-05-27",
+              "name": "Первый день Курбан-айта",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            }
+          ],
+          "transfers": [
+            {
+              "date": "2026-03-09",
+              "name": "Перенос праздника с 8 марта",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            },
+            {
+              "date": "2026-03-24",
+              "name": "Перенос Наурыза с 21 марта",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            },
+            {
+              "date": "2026-03-25",
+              "name": "Перенос Наурыза с 22 марта",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            },
+            {
+              "date": "2026-05-11",
+              "name": "Перенос праздника с 9 мая",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            },
+            {
+              "date": "2026-10-26",
+              "name": "Перенос Дня Республики с 25 октября",
+              "source_url": "https://www.gov.kz/article/16887?lang=ru"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

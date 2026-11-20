@@ -185,3 +185,22 @@ body{background:light-dark(#eef1f6,#11141a);padding:28px 22px;color:light-dark(#
 @media(max-width:1000px){#tt-worktime .tt-calendar-project{flex-direction:column;align-items:flex-start;gap:1px}#tt-worktime .tt-calendar-projects{gap:6px}#tt-worktime .tt-today-label{display:none}#tt-worktime .tt-month-summary{grid-template-columns:1fr}#tt-worktime .tt-month-summary [data-project-summary]{gap:12px 22px}}
 @media(max-width:760px){#tt-worktime .tt-calendar-day{padding:8px 5px}#tt-worktime .tt-month-summary [data-project-summary]{grid-template-columns:repeat(2,minmax(0,1fr))}#tt-worktime .tt-month-title{min-width:168px;font-size:18px}#tt-worktime .tt-calendar-project-code{gap:3px}#tt-worktime .tt-calendar-project-code .tt-dot{width:4px;height:4px}}
 @media(max-width:480px){#tt-worktime .tt-calendar-head{gap:12px}#tt-worktime .tt-month-nav{gap:3px}#tt-worktime .tt-month-title{font-size:17px;min-width:154px}#tt-worktime .tt-month-total{display:flex;align-items:baseline;gap:8px;text-align:left}#tt-worktime .tt-month-total strong{font-size:19px}#tt-worktime .tt-month-grid,#tt-worktime .tt-weekday-labels{gap:3px}#tt-worktime .tt-calendar-day{padding:6px 3px;border-radius:6px;min-height:106px;gap:6px}#tt-worktime .tt-calendar-project-code .tt-dot{display:none}#tt-worktime .tt-calendar-project{font-size:11px;gap:0;line-height:1.35}#tt-worktime .tt-calendar-projects{gap:6px}#tt-worktime .tt-calendar-project-hours{white-space:normal;overflow-wrap:normal}#tt-worktime .tt-calendar-project-code{white-space:normal}#tt-worktime .tt-calendar-number{font-size:12px;min-width:22px}#tt-worktime .tt-calendar-date{justify-content:flex-start}#tt-worktime .tt-calendar-day-total{font-size:11px;text-align:left;white-space:normal;overflow-wrap:normal}#tt-worktime .tt-day-dialog .tt-entry{grid-template-columns:minmax(0,1fr) auto}#tt-worktime .tt-day-dialog .tt-entry-actions{grid-column:1/-1}#tt-worktime .tt-heading-actions{width:100%}#tt-worktime .tt-calendar .tt-filters{gap:4px}#tt-worktime .tt-calendar .tt-filters button{padding:5px 8px}#tt-worktime .tt-weekday-labels{font-size:11px}#tt-worktime .tt-month-summary{gap:12px}#tt-worktime dialog.tt-day-dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);padding:15px}#tt-worktime .tt-day-dialog-actions .tt-primary{flex:1}}
+
+/* Manual entry calculation */
+#tt-worktime .tt-manual.tt-manual-interval{display:grid;gap:14px;align-items:stretch}
+#tt-worktime .tt-interval-toolbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+#tt-worktime .tt-interval-toolbar .tt-field{width:min(100%,300px)}
+#tt-worktime .tt-interval-toolbar>.tt-small{padding-bottom:10px}
+#tt-worktime .tt-interval-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 170px;gap:18px;align-items:start}
+#tt-worktime .tt-interval-point{display:grid;gap:9px;min-width:0}
+#tt-worktime .tt-interval-label{font-size:13px;font-weight:600}
+#tt-worktime .tt-interval-point-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+#tt-worktime .tt-duration-field{margin-top:28px}
+#tt-worktime .tt-manual-interval input[readonly]{background:var(--tt-soft);color:var(--tt-secondary)}
+#tt-worktime .tt-interval-result{font-size:13px;color:var(--tt-accent);font-weight:500;min-height:20px}
+#tt-worktime .tt-interval-validation{color:var(--tt-danger);font-size:12px}
+#tt-worktime .tt-entry-interval{margin-top:5px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+#tt-worktime .tt-day-part-label{display:block;font-size:11px;font-weight:400;color:var(--tt-secondary);text-align:right;margin-top:3px}
+@media(max-width:1000px){#tt-worktime .tt-interval-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#tt-worktime .tt-duration-field{grid-column:1/-1;margin-top:0;max-width:300px}}
+@media(max-width:760px){#tt-worktime .tt-interval-fields{grid-template-columns:1fr;gap:16px}#tt-worktime .tt-duration-field{max-width:none}}
+@media(max-width:420px){#tt-worktime .tt-interval-point-fields{grid-template-columns:1fr}#tt-worktime .tt-interval-toolbar .tt-field{width:100%}#tt-worktime .tt-interval-toolbar{gap:2px}#tt-worktime .tt-interval-toolbar>.tt-small{padding-bottom:0}#tt-worktime .tt-manual-interval .tt-actions{margin-left:0}}

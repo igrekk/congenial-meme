@@ -56,6 +56,87 @@ def duration(value):
     return value
 
 
+MAX_MANUAL_INTERVAL = 31 * 86400
+
+
+def interval_duration(value):
+    if type(value) is not int or not 1 <= value <= MAX_MANUAL_INTERVAL:
+        raise DomainError("Длительность интервала должна быть от 1 секунды до 31 дня.")
+    return value
+
+
+def local_timestamp(value, label):
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?", value):
+        raise DomainError(f"Укажите дату и время поля «{label}».")
+    try:
+        return datetime.fromisoformat(value).replace(tzinfo=MOSCOW)
+    except ValueError:
+        raise DomainError(f"Некорректная дата или время поля «{label}».") from None
+
+
+def local_iso(value):
+    return value.astimezone(MOSCOW).replace(tzinfo=None).isoformat(timespec="seconds")
+
+
+def interval_utc(value):
+    try:
+        return value.astimezone(timezone.utc)
+    except (OverflowError, ValueError):
+        raise DomainError("Дата интервала выходит за допустимый диапазон.") from None
+
+
+def manual_interval(payload, old_group=None):
+    mode = payload.get("interval_mode")
+    if mode not in (None, "bounds", "duration", "legacy", "duration_only"):
+        raise DomainError("Неизвестный способ расчета длительности.")
+    if mode in ("legacy", "duration_only"):
+        return None
+    start_value = payload.get("started_at", old_group["started_at"] if old_group else None)
+    if not start_value:
+        if mode in ("bounds", "duration") or payload.get("ended_at"):
+            raise DomainError("Укажите дату и время начала.")
+        return None
+    start = local_timestamp(start_value, "Начало")
+    end_value = payload.get("ended_at")
+    supplied_duration = payload.get("duration_seconds")
+    if end_value:
+        end = local_timestamp(end_value, "Окончание")
+        seconds = int((interval_utc(end) - interval_utc(start)).total_seconds())
+        interval_duration(seconds)
+        if supplied_duration is not None and interval_duration(supplied_duration) != seconds:
+            raise DomainError("Окончание и указанная длительность не совпадают.")
+    elif supplied_duration is not None or mode == "duration":
+        seconds = interval_duration(supplied_duration)
+        try:
+            end = (interval_utc(start) + timedelta(seconds=seconds)).astimezone(MOSCOW)
+        except (OverflowError, ValueError):
+            raise DomainError("Дата окончания выходит за допустимый диапазон.") from None
+    elif old_group and old_group["ended_at"]:
+        end = local_timestamp(old_group["ended_at"], "Окончание")
+        seconds = interval_duration(int((interval_utc(end) - interval_utc(start)).total_seconds()))
+    else:
+        raise DomainError("Укажите дату и время окончания либо длительность.")
+    return {"started_at": local_iso(start), "ended_at": local_iso(end), "duration_seconds": seconds,
+            "start": start, "end": end}
+
+
+def split_manual_interval(interval):
+    cursor, end = interval_utc(interval["start"]), interval_utc(interval["end"])
+    result = {}
+    while cursor < end:
+        local = cursor.astimezone(MOSCOW)
+        try:
+            midnight = datetime.combine(local.date() + timedelta(days=1), datetime_time(), MOSCOW)
+            boundary = min(end, midnight.astimezone(timezone.utc))
+        except (OverflowError, ValueError):
+            boundary = end
+        seconds = int((boundary - cursor).total_seconds())
+        duration(seconds)
+        result[local.date().isoformat()] = seconds
+        cursor = boundary
+    return result
+
+
 class ProjectTaskService:
     def task(self, connection, task_id, allow_archived=False):
         if not isinstance(task_id, str):
@@ -102,9 +183,17 @@ class TimeEntryService:
         return item
 
     @staticmethod
-    def view(item):
-        return {key: item[key] for key in
-                ("id", "task_id", "work_date", "duration_seconds", "source", "note", "session_id")}
+    def view(item, connection=None):
+        result = {key: item[key] for key in
+                  ("id", "task_id", "work_date", "duration_seconds", "source", "note", "session_id")}
+        result.update({"started_at": None, "ended_at": None, "manual_group_id": item["manual_group_id"],
+                       "group_duration_seconds": None})
+        if item["manual_group_id"] and connection is not None:
+            group = connection.execute("SELECT * FROM manual_groups WHERE id=?", (item["manual_group_id"],)).fetchone()
+            if group:
+                result.update({key: group[key] for key in ("started_at", "ended_at")})
+                result["group_duration_seconds"] = group["duration_seconds"]
+        return result
 
     def resolve_task(self, connection, payload, now, existing_task_id=None):
         if payload.get("task_id"):
@@ -125,11 +214,24 @@ class TimeEntryService:
     def create(self, connection, payload, now):
         request_id, fingerprint = self.request_fields(payload)
         if request_id:
+            group = connection.execute("SELECT * FROM manual_groups WHERE request_id=?", (request_id,)).fetchone()
+            if group:
+                if group["request_fingerprint"] != fingerprint:
+                    raise DomainError("Идентификатор запроса уже использован для другой записи.", 409)
+                return self.group_result(connection, group["id"])
             old = connection.execute("SELECT * FROM time_entries WHERE request_id=?", (request_id,)).fetchone()
             if old:
                 if old["request_fingerprint"] != fingerprint:
                     raise DomainError("Идентификатор запроса уже использован для другой записи.", 409)
-                return self.view(old)
+                return self.view(old, connection)
+        interval = manual_interval(payload)
+        if interval:
+            note = text(payload.get("note", ""), "Примечание", 4000, False)
+            task = self.resolve_task(connection, payload, now)
+            group_id = identifier("m_")
+            self.write_group(connection, group_id, task["id"], note, interval,
+                             split_manual_interval(interval), now, request_id=request_id, fingerprint=fingerprint)
+            return self.group_result(connection, group_id)
         day = work_date(payload.get("work_date"))
         seconds = duration(payload.get("duration_seconds"))
         note = text(payload.get("note", ""), "Примечание", 4000, False)
@@ -139,10 +241,65 @@ class TimeEntryService:
             "INSERT INTO time_entries(id,task_id,work_date,duration_seconds,source,note,request_id,"
             "request_fingerprint,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
             (entry_id, task["id"], day, seconds, "manual", note, request_id, fingerprint, now, now))
-        return self.view(self.entry(connection, entry_id))
+        return self.view(self.entry(connection, entry_id), connection)
+
+    def group_result(self, connection, group_id, preferred_id=None):
+        entries = [self.view(row, connection) for row in connection.execute(
+            "SELECT * FROM time_entries WHERE manual_group_id=? ORDER BY work_date,id", (group_id,))]
+        if not entries:
+            raise DomainError("Записи ручного интервала не найдены.", 404)
+        first = next((entry for entry in entries if entry["id"] == preferred_id), entries[0])
+        return {**first, "entries": entries}
+
+    def write_group(self, connection, group_id, task_id, note, interval, allocations, now,
+                    request_id=None, fingerprint=None, anchor=None):
+        existing = connection.execute("SELECT * FROM manual_groups WHERE id=?", (group_id,)).fetchone()
+        old_rows = list(connection.execute("SELECT * FROM time_entries WHERE manual_group_id=?", (group_id,)))
+        if anchor is not None and not anchor["manual_group_id"]:
+            old_rows.append(anchor)
+        ids = {row["work_date"]: row["id"] for row in old_rows}
+        if anchor is not None and anchor["work_date"] not in allocations:
+            ids[next(iter(allocations))] = anchor["id"]
+        total = sum(allocations.values())
+        start_value, end_value = (interval["started_at"], interval["ended_at"]) if interval else (None, None)
+        if existing:
+            connection.execute("UPDATE manual_groups SET task_id=?,started_at=?,ended_at=?,duration_seconds=?,"
+                               "note=?,updated_at=? WHERE id=?",
+                               (task_id, start_value, end_value, total, note, now, group_id))
+        else:
+            connection.execute("INSERT INTO manual_groups(id,task_id,started_at,ended_at,duration_seconds,note,"
+                               "request_id,request_fingerprint,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                               (group_id, task_id, start_value, end_value, total, note, request_id, fingerprint, now, now))
+        connection.execute("DELETE FROM time_entries WHERE manual_group_id=?", (group_id,))
+        if anchor is not None and not anchor["manual_group_id"]:
+            connection.execute("DELETE FROM time_entries WHERE id=?", (anchor["id"],))
+        created_at = min((row["created_at"] for row in old_rows), default=now)
+        for day, seconds in allocations.items():
+            entry_id = ids.get(day, identifier("e_"))
+            connection.execute("INSERT INTO time_entries(id,task_id,work_date,duration_seconds,source,note,"
+                               "manual_group_id,created_at,updated_at) VALUES (?,?,?,?,'manual',?,?,?,?)",
+                               (entry_id, task_id, day, seconds, note, group_id, created_at, now))
 
     def update(self, connection, entry_id, payload, now):
         old = self.entry(connection, entry_id)
+        group = (connection.execute("SELECT * FROM manual_groups WHERE id=?", (old["manual_group_id"],)).fetchone()
+                 if old["manual_group_id"] else None)
+        interval = manual_interval(payload, group)
+        if interval and old["source"] == "timer":
+            raise DomainError("Для записи таймера измените дату и длительность без ручного интервала.")
+        if group or interval:
+            note = text(payload.get("note", group["note"] if group else old["note"]), "Примечание", 4000, False)
+            if "task_id" in payload or "project" in payload or "title" in payload:
+                task_id = self.resolve_task(connection, payload, now, old["task_id"])["id"]
+            else:
+                task_id = old["task_id"]
+            allocations = (split_manual_interval(interval) if interval else
+                           {work_date(payload.get("work_date", old["work_date"])):
+                            duration(payload.get("duration_seconds", group["duration_seconds"] if group else old["duration_seconds"]))})
+            group_id = old["manual_group_id"] or identifier("m_")
+            self.write_group(connection, group_id, task_id, note, interval, allocations, now,
+                             request_id=old["request_id"], fingerprint=old["request_fingerprint"], anchor=old)
+            return self.group_result(connection, group_id, entry_id)
         day = work_date(payload.get("work_date", old["work_date"]))
         seconds = duration(payload.get("duration_seconds", old["duration_seconds"]))
         note = text(payload.get("note", old["note"]), "Примечание", 4000, False)
@@ -159,7 +316,7 @@ class TimeEntryService:
                 raise DomainError("На эту дату уже есть часть той же сессии таймера. Измените длительности отдельно.", 409)
         connection.execute("UPDATE time_entries SET task_id=?,work_date=?,duration_seconds=?,note=?,updated_at=? WHERE id=?",
                            (task_id, day, seconds, note, now, entry_id))
-        return self.view(self.entry(connection, entry_id))
+        return self.view(self.entry(connection, entry_id), connection)
 
 
 class TimerService:
@@ -260,7 +417,7 @@ class TimerService:
     def stop(self, connection, session_id, now):
         row = self.session(connection, session_id)
         if row["status"] == "finished":
-            return {"session_id": session_id, "entries": [self.entries.view(e) for e in connection.execute(
+            return {"session_id": session_id, "entries": [self.entries.view(e, connection) for e in connection.execute(
                 "SELECT * FROM time_entries WHERE session_id=? ORDER BY work_date", (session_id,))], "already_finished": True}
         if self.milliseconds(connection, session_id, now) < 1000:
             raise DomainError("Прошло меньше секунды. Дождитесь 1 секунды работы и завершите таймер.")
@@ -273,7 +430,7 @@ class TimerService:
                 "VALUES (?,?,?,?,'timer',?,?,?)",
                 (identifier("e_"), row["task_id"], day, seconds, session_id, now, now))
         connection.execute("UPDATE timer_sessions SET status='finished',finished_at=? WHERE id=?", (now, session_id))
-        return {"session_id": session_id, "entries": [self.entries.view(e) for e in connection.execute(
+        return {"session_id": session_id, "entries": [self.entries.view(e, connection) for e in connection.execute(
             "SELECT * FROM time_entries WHERE session_id=? ORDER BY work_date", (session_id,))], "already_finished": False}
 
 
@@ -321,7 +478,7 @@ class Tracker:
         if start > end:
             raise DomainError("Начало периода должно быть не позже окончания.")
         with self.storage.transaction() as connection:
-            entries = [self.entries.view(e) for e in connection.execute(
+            entries = [self.entries.view(e, connection) for e in connection.execute(
                 "SELECT * FROM time_entries WHERE work_date>=? AND work_date<=? AND deleted_at IS NULL "
                 "ORDER BY work_date,created_at,id", (start, end))]
             tasks = [self.tasks.view(connection, t) for t in connection.execute("SELECT * FROM tasks ORDER BY created_at,id")]
@@ -369,16 +526,28 @@ class Tracker:
 
     def delete_entry(self, entry_id):
         with self.storage.transaction(True) as connection:
-            self.entries.entry(connection, entry_id, True)
-            connection.execute("UPDATE time_entries SET deleted_at=COALESCE(deleted_at,?),updated_at=? WHERE id=?",
-                               (self.now(), self.now(), entry_id))
+            old = self.entries.entry(connection, entry_id, True)
+            now = self.now()
+            if old["manual_group_id"]:
+                connection.execute("UPDATE manual_groups SET deleted_at=COALESCE(deleted_at,?),updated_at=? WHERE id=?",
+                                   (now, now, old["manual_group_id"]))
+                connection.execute("UPDATE time_entries SET deleted_at=COALESCE(deleted_at,?),updated_at=? WHERE manual_group_id=?",
+                                   (now, now, old["manual_group_id"]))
+            else:
+                connection.execute("UPDATE time_entries SET deleted_at=COALESCE(deleted_at,?),updated_at=? WHERE id=?",
+                                   (now, now, entry_id))
         return {"deleted": entry_id}
 
     def restore_entry(self, entry_id):
         with self.storage.transaction(True) as connection:
-            self.entries.entry(connection, entry_id, True)
-            connection.execute("UPDATE time_entries SET deleted_at=NULL,updated_at=? WHERE id=?", (self.now(), entry_id))
-            return self.entries.view(self.entries.entry(connection, entry_id))
+            old = self.entries.entry(connection, entry_id, True)
+            now = self.now()
+            if old["manual_group_id"]:
+                connection.execute("UPDATE manual_groups SET deleted_at=NULL,updated_at=? WHERE id=?", (now, old["manual_group_id"]))
+                connection.execute("UPDATE time_entries SET deleted_at=NULL,updated_at=? WHERE manual_group_id=?", (now, old["manual_group_id"]))
+                return self.entries.group_result(connection, old["manual_group_id"], entry_id)
+            connection.execute("UPDATE time_entries SET deleted_at=NULL,updated_at=? WHERE id=?", (now, entry_id))
+            return self.entries.view(self.entries.entry(connection, entry_id), connection)
 
     def start_timer(self, payload):
         payload = self.payload(payload)

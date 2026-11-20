@@ -1,6 +1,9 @@
 import {monthStart,shiftMonth,calendarRange,monthEntries,projectTotals,formatHours} from './calendar.js';
+import {createHolidayLayer} from './holidays.js';
+import {calculateInterval,splitWallDateTime,normalizeMinuteDuration} from './intervals.js';
 
 const root = document.getElementById('tt-worktime');
+const holidayLayer = createHolidayLayer(root);
 const q = s => root.querySelector(s);
 const qa = s => [...root.querySelectorAll(s)];
 const projects = ['INAL','INAC','GCVU','ECGP'];
@@ -9,26 +12,72 @@ const parseDate = value => new Date(value+'T12:00:00Z');
 const addDay = (value, count) => {const d=parseDate(value);d.setUTCDate(d.getUTCDate()+count);return d.toISOString().slice(0,10);};
 const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(parseDate(value).getTime()) && parseDate(value).toISOString().slice(0,10)===value;
 const sum = values => values.reduce((n,item)=>n+item.duration_seconds,0);
-const clock = value => {const s=Math.max(0,Math.floor(value));return [Math.floor(s/3600),Math.floor(s%3600/60),s%60].map(n=>String(n).padStart(2,'0')).join(':');};
-const format = value => {const n=Math.max(0,Math.floor(value)),h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return h?h+' ч'+(m?' '+m+' мин':'')+(s?' '+s+' с':''):m?m+' мин'+(s?' '+s+' с':''):s+' с';};
+const clock = value => {const minutes=Math.max(0,Math.floor(value/60));return [Math.floor(minutes/60),minutes%60].map(n=>String(n).padStart(2,'0')).join(':');};
+const format = value => {const n=Math.max(0,Math.floor(value)),h=Math.floor(n/3600),m=Math.floor(n%3600/60);return n>0&&n<60?'меньше минуты':h?h+' ч'+(m?' '+m+' мин':''):m+' мин';};
 const uid = () => crypto.randomUUID();
 const task = id => data.tasks.find(t=>t.id===id);
 const normalize = text => text.trim().toLocaleLowerCase('ru');
 let data={projects:[],tasks:[],entries:[],timer:null,today:null,server_now:0};
-let ui={view:'journal',mode:'manual',day:null,month:null,filter:'all',editing:null,showArchive:false,composerOpen:false};
+let ui={view:'journal',mode:'manual',day:null,month:null,filter:'all',editing:null,showArchive:false,composerOpen:false,intervalMode:'bounds'};
 let ready=false, connected=false, busy=false, timerReceivedAt=0, requestSerial=0, requestController=null;
 let removedId=null, renameId=null, restoreName=null, pendingEntry=null;
 let backupList=[];
 let connectionError=false;
+let endDateTouched=false,removedIsGroup=false;
+let timingDirty=false,durationDirty=false,originalTiming=null;
 
-function parseDuration(value){
-  const v=value.trim().replace(',','.');let seconds;
-  if(/^\d{1,2}:\d{2}(:\d{2})?$/.test(v)){
-    const a=v.split(':').map(Number);if(a[1]>59||(a[2]||0)>59)return NaN;
-    seconds=a[0]*3600+a[1]*60+(a[2]||0);
-  }else if(/^\d+(\.\d{1,5})?$/.test(v))seconds=Math.round(Number(v)*3600);
-  else return NaN;
-  return Number.isInteger(seconds)&&seconds>0&&seconds<=86400?seconds:NaN;
+function intervalCalculation(){
+  const date=q('[data-date]').value;
+  if(ui.editing&&originalTiming&&!timingDirty)return {valid:true,incomplete:false,preserved:true,work_date:originalTiming.started_at?.slice(0,10)||originalTiming.work_date,started_at:originalTiming.started_at,ended_at:originalTiming.ended_at,duration_seconds:originalTiming.group_duration_seconds||originalTiming.duration_seconds};
+  if(ui.editing&&originalTiming&&ui.intervalMode==='duration_only'&&!durationDirty){
+    if(!isDate(date))return {valid:false,incomplete:!date,error:'Укажите корректную дату.'};
+    return {valid:true,incomplete:false,work_date:date,started_at:null,ended_at:null,duration_seconds:originalTiming.duration_seconds};
+  }
+  const maximum=ui.intervalMode==='duration_only'?86400:31*86400;
+  const roundedDuration=normalizeMinuteDuration(q('[data-duration]').value,maximum);
+  const duration=Number.isFinite(roundedDuration)?clock(roundedDuration):q('[data-duration]').value;
+  const result=calculateInterval({mode:ui.intervalMode,startDate:date,startTime:q('[data-start-time]').value.slice(0,5),endDate:q('[data-end-date]').value,endTime:q('[data-end-time]').value.slice(0,5),duration});
+  if(result.error)result.error=result.error.replace('от 1 секунды','от 1 минуты');
+  return result;
+}
+function formatWall(value){
+  const parts=splitWallDateTime(value);if(!parts.date)return '';
+  const time=parts.time.slice(0,5);
+  return parts.date.split('-').reverse().join('.')+' '+time;
+}
+function resetManualCalculation(){
+  ui.intervalMode='bounds';endDateTouched=false;
+  timingDirty=false;durationDirty=false;originalTiming=null;
+  q('[data-start-time]').value='';q('[data-end-time]').value='';
+  q('[data-end-date]').value=q('[data-date]').value||ui.day||'';
+  q('[data-duration]').value='';
+}
+function syncManualCalculation(){
+  const mode=ui.intervalMode,legacy=mode==='duration_only',bounds=mode==='bounds';
+  const original=data.entries.find(entry=>entry.id===ui.editing),timerEntry=original?.source==='timer';
+  q('[data-interval-mode]').value=legacy?'duration_only':'linked';
+  for(const option of q('[data-interval-mode]').options)option.disabled=timerEntry&&option.value!=='duration_only';
+  q('[data-start-time-field]').hidden=legacy;q('[data-end-point]').hidden=legacy;
+  q('[data-start-label]').textContent=legacy?'Рабочий день':'Начало';
+  q('[data-date-label]').textContent=legacy?'Дата':'Дата начала';
+  q('[data-duration-label]').textContent='Длительность';
+  q('[data-duration]').readOnly=false;
+  q('[data-duration]').placeholder='2:30 или 2,5';
+  q('[data-end-date]').readOnly=false;q('[data-end-time]').readOnly=false;
+  q('[data-start-time]').required=!legacy;q('[data-end-date]').required=bounds;q('[data-end-time]').required=bounds;
+  q('#tt-duration-help').textContent=legacy?'2,5 часа = 2 ч 30 мин · до 24 часов за запись':'Длительность изменяет окончание; окончание изменяет длительность.';
+  q('[data-interval-group-note]').hidden=!original?.manual_group_id;
+  q('[data-delete]').textContent=original?.manual_group_id?'Удалить интервал':'Удалить';
+  const result=intervalCalculation();
+  if(bounds&&!result.preserved)q('[data-duration]').value=result.valid?clock(result.duration_seconds):'';
+  if(mode==='duration'&&!result.preserved){
+    const end=result.valid?splitWallDateTime(result.ended_at):{date:'',time:''};
+    q('[data-end-date]').value=end.date;q('[data-end-time]').value=end.time.slice(0,5);
+  }
+  q('[data-interval-error]').hidden=result.valid||result.incomplete;
+  q('[data-interval-error]').textContent=result.valid?'':result.error;
+  q('[data-interval-result]').textContent=result.valid?(legacy?'Итого: '+format(result.duration_seconds):'Итого: '+format(result.duration_seconds)+' · окончание '+formatWall(result.ended_at)):(timerEntry?'Запись таймера: можно исправить дату и длительность.':'');
+  return result;
 }
 function showError(message){q('[data-error]').textContent=message;q('[data-error]').hidden=!message;}
 function notice(message){q('[data-notice]').textContent=message;}
@@ -60,7 +109,7 @@ async function refresh({initial=false}={}){
     let value=await read(query);
     if(serial!==requestSerial)return false;
     if(!ui.month){
-      ui.day=value.today;ui.month=monthStart(value.today);q('[data-date]').value=ui.day;
+      ui.day=value.today;ui.month=monthStart(value.today);q('[data-date]').value=ui.day;q('[data-end-date]').value=ui.day;
       if(value.timer)ui.mode='timer';
       const range=calendarRange(ui.month);value=await read('?from='+range.from+'&to='+range.to);
     }
@@ -103,7 +152,7 @@ function renderComposer(){
     q('[data-active-status]').textContent=data.timer.status==='paused'?'На паузе · время не учитывается':'Идет работа · запись создастся после завершения';
     q('[data-pause]').textContent=data.timer.status==='paused'?'Продолжить':'Пауза';
   }
-  updateOptions();tick();
+  syncManualCalculation();updateOptions();tick();
 }
 function filteredEntries(){return data.entries.filter(e=>ui.filter==='all'||task(e.task_id)?.project===ui.filter);}
 function renderCalendar(){
@@ -123,8 +172,10 @@ function renderCalendar(){
   }).join('');
   const totals=projectTotals(monthEntries(data.entries,ui.month),data.tasks);
   q('[data-project-summary]').innerHTML=projects.map(p=>'<div class="tt-project-line"><span class="tt-project-tag">'+dot(p)+p+'</span><span class="tt-project-value">'+format(totals[p])+'</span></div>').join('');
+  holidayLayer.render(ui.month);
 }
 function renderEntries(){
+  holidayLayer.updateDetails(ui.day);
   if(!ui.day)return;
   q('[data-day-title]').textContent=(ui.day===data.today?'Сегодня, ':'')+new Intl.DateTimeFormat('ru',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(parseDate(ui.day));
   const entries=filteredEntries().filter(e=>e.work_date===ui.day);
@@ -135,7 +186,10 @@ function renderEntries(){
   q('[data-detail-filter-label]').textContent='Показаны записи проекта '+ui.filter;
   q('[data-entries]').innerHTML=entries.length?entries.map(e=>{
     const t=task(e.task_id),id=escape(e.id),title=t?.title||'Задача',project=t?.project||'INAL';
-    return '<article class="tt-entry"><div><p class="tt-entry-title">'+escape(title)+'</p><div class="tt-meta"><span class="tt-project-tag">'+dot(project)+escape(project)+'</span><span>·</span><span>'+(e.source==='timer'?'По таймеру':'Вручную')+'</span>'+(t?.archived?'<span>· В архиве</span>':'')+'</div>'+(e.note?'<p class="tt-entry-note tt-small tt-muted">'+escape(e.note)+'</p>':'')+'</div><span class="tt-entry-duration">'+format(e.duration_seconds)+'</span><div class="tt-entry-actions"><button class="tt-icon-button" type="button" data-edit="'+id+'" aria-label="Изменить запись: '+escape(title)+'">✎</button>'+(t&&!t.archived?'<button class="tt-icon-button" type="button" data-run="'+escape(t.id)+'" data-mutate aria-label="Запустить таймер: '+escape(title)+'" '+(data.timer?'disabled':'')+'>▶</button>':'')+'</div></article>';
+    const interval=e.started_at&&e.ended_at;
+    const multipleDates=interval&&e.started_at.slice(0,10)!==e.ended_at.slice(0,10);
+    const context=interval?'<p class="tt-entry-interval tt-small tt-muted">Интервал: '+escape(formatWall(e.started_at))+' — '+escape(formatWall(e.ended_at))+(multipleDates?' · всего '+escape(format(e.group_duration_seconds||e.duration_seconds)):'')+'</p>':'';
+    return '<article class="tt-entry"><div><p class="tt-entry-title">'+escape(title)+'</p><div class="tt-meta"><span class="tt-project-tag">'+dot(project)+escape(project)+'</span><span>·</span><span>'+(e.source==='timer'?'По таймеру':'Вручную')+'</span>'+(t?.archived?'<span>· В архиве</span>':'')+'</div>'+context+(e.note?'<p class="tt-entry-note tt-small tt-muted">'+escape(e.note)+'</p>':'')+'</div><span class="tt-entry-duration">'+format(e.duration_seconds)+(multipleDates?'<span class="tt-day-part-label">за этот день</span>':'')+'</span><div class="tt-entry-actions"><button class="tt-icon-button" type="button" data-edit="'+id+'" aria-label="Изменить запись: '+escape(title)+'">✎</button>'+(t&&!t.archived?'<button class="tt-icon-button" type="button" data-run="'+escape(t.id)+'" data-mutate aria-label="Запустить таймер: '+escape(title)+'" '+(data.timer?'disabled':'')+'>▶</button>':'')+'</div></article>';
   }).join(''):'<div class="tt-empty"><strong>Записей пока нет</strong><br>Добавьте часы или запустите таймер.<br><span class="tt-small">Ручная запись требует только дату и длительность.</span></div>';
 }
 function renderTasks(){
@@ -162,9 +216,9 @@ function render(){
 function elapsed(){return data.timer?Math.max(0,Math.floor(data.timer.elapsed_seconds+(data.timer.status==='running'?(Date.now()-timerReceivedAt)/1000:0))):0;}
 function tick(){if(data.timer){const text=clock(elapsed());q('[data-elapsed]').textContent=text;q('[data-global-clock]').textContent=(data.timer.status==='paused'?'Пауза · ':'◷ ')+text;}}
 function clearEditing({clearTask=true}={}){
-  ui.editing=null;q('[data-duration]').value='';q('[data-note]').value='';if(clearTask)q('[data-task]').value='';pendingEntry=null;renderComposer();
+  ui.editing=null;q('[data-note]').value='';if(clearTask)q('[data-task]').value='';pendingEntry=null;resetManualCalculation();renderComposer();
 }
-function selectedDay(date){if(ui.editing)clearEditing();ui.day=date;q('[data-date]').value=date;renderCalendar();renderEntries();actionStates();}
+function selectedDay(date){if(ui.editing)clearEditing();ui.day=date;q('[data-date]').value=date;if(!endDateTouched)q('[data-end-date]').value=date;syncManualCalculation();renderCalendar();renderEntries();actionStates();}
 function closeDayDetails(){if(q('[data-day-dialog]').open)q('[data-day-dialog]').close();}
 function openComposer(mode='manual'){
   closeDayDetails();ui.view='journal';ui.mode=mode;ui.composerOpen=true;
@@ -173,11 +227,17 @@ function openComposer(mode='manual'){
 }
 async function saveEntry(){
   if(busy||ui.mode!=='manual')return;
-  const title=q('[data-task]').value.trim(),date=q('[data-date]').value,seconds=parseDuration(q('[data-duration]').value);
+  const title=q('[data-task]').value.trim(),result=syncManualCalculation();
   if(!title)return showError('Укажите задачу, над которой работали.');
-  if(!isDate(date))return showError('Укажите корректную дату.');
-  if(!Number.isFinite(seconds))return showError('Введите длительность от 1 секунды до 24 часов: например 2,5 или 02:30.');
-  const payload={project:q('[data-project]').value,title,work_date:date,duration_seconds:seconds,note:q('[data-note]').value.trim()};
+  if(!result.valid)return showError(result.error);
+  const date=result.work_date,seconds=result.duration_seconds;
+  const payload={project:q('[data-project]').value,title,note:q('[data-note]').value.trim()};
+  if(!ui.editing||timingDirty){
+    payload.work_date=date;payload.interval_mode=ui.intervalMode==='duration_only'?'legacy':ui.intervalMode;
+    if(ui.intervalMode==='bounds'){payload.started_at=result.started_at;payload.ended_at=result.ended_at;}
+    else if(ui.intervalMode==='duration'){payload.started_at=result.started_at;payload.duration_seconds=seconds;}
+    else payload.duration_seconds=seconds;
+  }
   if(ui.editing){const original=data.entries.find(e=>e.id===ui.editing),originalTask=task(original?.task_id);if(originalTask&&originalTask.project===payload.project&&originalTask.title===payload.title)payload.task_id=originalTask.id;}
   const signature=JSON.stringify(payload);if(!pendingEntry||pendingEntry.signature!==signature)pendingEntry={signature,id:uid()};
   const editing=ui.editing;
@@ -193,6 +253,25 @@ async function startFromComposer(){
 }
 q('[data-entry-form]').addEventListener('submit',event=>{event.preventDefault();if(ui.mode==='manual')saveEntry();else if(!data.timer)startFromComposer();});
 q('[data-project]').addEventListener('change',updateOptions);
+q('[data-interval-mode]').addEventListener('change',event=>{ui.intervalMode=event.target.value==='duration_only'?'duration_only':'bounds';timingDirty=true;durationDirty=true;showError('');syncManualCalculation();});
+for(const selector of ['[data-date]','[data-start-time]','[data-end-date]','[data-end-time]','[data-duration]']){
+  const edited=finalize=>{
+    timingDirty=true;
+    if(selector==='[data-duration]'){
+      durationDirty=true;if(ui.intervalMode!=='duration_only')ui.intervalMode='duration';
+      if(finalize){const normalized=normalizeMinuteDuration(q('[data-duration]').value,ui.intervalMode==='duration_only'?86400:31*86400);if(Number.isFinite(normalized))q('[data-duration]').value=clock(normalized);}
+    }
+    if(selector==='[data-end-date]'||selector==='[data-end-time]'){
+      if(ui.intervalMode!=='duration_only')ui.intervalMode='bounds';
+      if(selector==='[data-end-date]')endDateTouched=true;
+    }
+    if(selector==='[data-date]'&&!endDateTouched&&!q('[data-end-time]').value&&ui.intervalMode==='bounds')q('[data-end-date]').value=q('[data-date]').value;
+    if(finalize&&(selector==='[data-start-time]'||selector==='[data-end-time]'))q(selector).value=q(selector).value.slice(0,5);
+    syncManualCalculation();
+  };
+  q(selector).addEventListener('input',()=>edited(false));
+  q(selector).addEventListener('change',()=>edited(true));
+}
 q('[data-start]').addEventListener('click',startFromComposer);
 q('[data-return-timer]').addEventListener('click',()=>{ui.editing=null;openComposer('timer');});
 q('[data-toggle-composer]').addEventListener('click',()=>{if(busy||!ready)return;ui.composerOpen=!ui.composerOpen;renderComposer();actionStates();if(ui.composerOpen)q('[data-task]').focus();});
@@ -202,8 +281,8 @@ q('[data-detail-all]').addEventListener('click',()=>{ui.filter='all';renderCalen
 q('[data-pause]').addEventListener('click',()=>{const timer=data.timer;if(!timer)return;const paused=timer.status==='paused';perform(()=>api('/api/timer/'+encodeURIComponent(timer.id)+(paused?'/resume':'/pause'),'POST',{}),null,paused?'Таймер продолжен.':'Таймер на паузе.');});
 q('[data-stop]').addEventListener('click',()=>{const timer=data.timer;if(!timer)return;perform(()=>api('/api/timer/'+encodeURIComponent(timer.id)+'/stop','POST',{}),result=>{const dates=(result.entries||[]).map(e=>e.work_date).filter(isDate).sort();ui.mode='manual';ui.day=dates.at(-1)||data.today;ui.month=monthStart(ui.day);ui.filter='all';q('[data-date]').value=ui.day;clearEditing();ui.composerOpen=false;},'Таймер завершен. Записи добавлены в календарь.');});
 q('[data-cancel]').addEventListener('click',()=>{clearEditing();showError('');notice('Редактирование отменено.');});
-q('[data-delete]').addEventListener('click',()=>{const id=ui.editing;if(!id)return;perform(()=>api('/api/time-entries/'+encodeURIComponent(id),'DELETE',{}),()=>{removedId=id;clearEditing();q('[data-undo]').hidden=false;},'Запись удалена.');});
-q('[data-undo]').addEventListener('click',()=>{if(!removedId)return;perform(()=>api('/api/time-entries/'+encodeURIComponent(removedId)+'/restore','POST',{}),()=>{removedId=null;q('[data-undo]').hidden=true;},'Запись восстановлена.');});
+q('[data-delete]').addEventListener('click',()=>{const id=ui.editing;if(!id)return;const group=!!data.entries.find(entry=>entry.id===id)?.manual_group_id;perform(()=>api('/api/time-entries/'+encodeURIComponent(id),'DELETE',{}),()=>{removedId=id;removedIsGroup=group;clearEditing();q('[data-undo]').textContent=group?'Отменить удаление интервала':'Отменить удаление';q('[data-undo]').hidden=false;},group?'Интервал удален, включая его части на других датах.':'Запись удалена.');});
+q('[data-undo]').addEventListener('click',()=>{if(!removedId)return;perform(()=>api('/api/time-entries/'+encodeURIComponent(removedId)+'/restore','POST',{}),()=>{removedId=null;q('[data-undo]').hidden=true;},removedIsGroup?'Интервал восстановлен целиком.':'Запись восстановлена.');});
 q('[data-today]').addEventListener('click',async()=>{if(busy||!ready)return;ui.month=monthStart(data.today);selectedDay(data.today);await refresh();});
 q('[data-show-archive]').addEventListener('change',event=>{ui.showArchive=event.target.checked;renderTasks();actionStates();});
 q('[data-task-form]').addEventListener('submit',event=>{event.preventDefault();const title=q('[data-new-task]').value.trim();if(!title)return showError('Укажите название задачи.');perform(()=>api('/api/tasks','POST',{project:q('[data-new-project]').value,title}),()=>{q('[data-new-task]').value='';},'Задача сохранена.');});
@@ -221,7 +300,13 @@ root.addEventListener('click',async event=>{
   if(b.dataset.run)startTimer(b.dataset.run);
   if(b.dataset.edit){
     const entry=data.entries.find(e=>e.id===b.dataset.edit),t=task(entry?.task_id);if(!entry||!t)return;
-    ui.editing=entry.id;ui.mode='manual';q('[data-project]').value=t.project;q('[data-task]').value=t.title;q('[data-date]').value=entry.work_date;q('[data-duration]').value=clock(entry.duration_seconds);q('[data-note]').value=entry.note||'';
+    ui.editing=entry.id;ui.mode='manual';originalTiming={...entry};timingDirty=false;durationDirty=false;q('[data-project]').value=t.project;q('[data-task]').value=t.title;q('[data-note]').value=entry.note||'';
+    if(entry.started_at&&entry.ended_at&&entry.source!=='timer'){
+      const start=splitWallDateTime(entry.started_at),end=splitWallDateTime(entry.ended_at);
+      ui.intervalMode='bounds';q('[data-date]').value=start.date;q('[data-start-time]').value=start.time.slice(0,5);q('[data-end-date]').value=end.date;q('[data-end-time]').value=end.time.slice(0,5);q('[data-duration]').value=clock(entry.group_duration_seconds||entry.duration_seconds);endDateTouched=true;
+    }else{
+      ui.intervalMode='duration_only';q('[data-date]').value=entry.work_date;q('[data-duration]').value=clock(entry.duration_seconds);q('[data-start-time]').value='';q('[data-end-time]').value='';q('[data-end-date]').value=entry.work_date;endDateTouched=false;
+    }
     showError('');openComposer('manual');notice('Редактирование записи · '+t.project+'.');
   }
   if(b.dataset.rename){const t=task(b.dataset.rename);if(!t)return;renameId=t.id;q('[data-rename-title]').value=t.title;q('[data-rename-dialog]').showModal();}
